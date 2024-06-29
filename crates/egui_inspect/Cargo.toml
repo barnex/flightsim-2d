@@ -1,0 +1,17 @@
+[package]
+name = "egui_inspect"
+version = "0.1.3"
+edition = "2021"
+description = "Easily creating UI to edit and preview data"
+readme = "../README.md"
+#repository = "https://github.com/Meisterlama/egui_inspect"
+homepage = "https://github.com/Meisterlama/egui_inspect"
+license = "MIT"
+categories = ["gui", "game-development"]
+
+[dependencies]
+egui_inspect_derive = { path = "../egui_inspect_derive" }
+egui = { workspace = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "*", features = ["js", "js-sys"] }

@@ -1,0 +1,20 @@
+{
+	"cSpell.words": [
+		"Crablet",
+		"crablets",
+		"eframe",
+		"egui",
+		"gamestate",
+		"impls",
+		"messagepack",
+		"msgpack",
+		"newtype",
+		"repr",
+		"rpass",
+		"scenegraph",
+		"typestate",
+		"WGPU",
+		"wgsl"
+	],
+	"workbench.colorTheme": "Twipped"
+}

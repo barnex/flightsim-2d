@@ -1,0 +1,1 @@
+Ferris emoji by Dzuk, licensed CC BY-NC-SA, https://weirder.earth/@dzuk/102711286545743862.

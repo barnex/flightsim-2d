@@ -1,0 +1,52 @@
+[package]
+name = "app"
+version = "1.0.0"
+authors = ["Arne V <barnex@gmail.com>"]
+edition = "2021"
+#rust-version = "1.72"
+
+default-run = "app"
+
+[dependencies]
+ahash = { workspace = true }
+anyhow = { workspace = true }
+base64 = { workspace = true }
+bytemuck = { workspace = true }
+core_util = { workspace = true }
+eframe = { workspace = true }
+egui = { workspace = true }
+egui_inspect = { workspace = true }
+flate2 = { workspace = true }
+image = { workspace = true }
+itertools = { workspace = true }
+log = { workspace = true }
+matrix = { workspace = true }
+num-derive = { workspace = true }
+num-traits = { workspace = true }
+once_cell = { workspace = true }
+proc_macros = { workspace = true }
+rand = { workspace = true }
+rand_xoshiro = { workspace = true }
+rmp-serde = { workspace = true }
+serde = { workspace = true }
+smallvec = { workspace = true }
+smol_str = { workspace = true }
+sys_io = { workspace = true }
+vector = { workspace = true }
+web-time = { workspace = true }
+
+# native:
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+env_logger = "0.10"
+
+# web:
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen-futures = "0.4"
+
+
+[profile.release]
+opt-level = 2 # fast and small wasm
+
+# Optimize all dependencies even in debug builds:
+[profile.dev.package."*"]
+inherits = "release"

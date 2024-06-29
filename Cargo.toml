@@ -1,0 +1,62 @@
+[workspace]
+resolver = "2"
+
+members = [
+	"crates/core_util",
+	"crates/app",
+	"crates/sys_io",
+	"crates/vector",
+	"crates/matrix",
+	"crates/egui_inspect",
+	"crates/egui_inspect_derive",
+	"crates/proc_macros",
+	"crates/proc_macros_impl",
+]
+
+[workspace.dependencies]
+ahash = { version = "0.8.7", default_features = false, features = ["no-rng"] }
+anyhow = "1"
+base64 = "*"
+bytemuck = "1"
+core_util = { path = "crates/core_util" }
+eframe = { version = "0.27.2", default-features = false, features = [ "persistence", "default_fonts", "wgpu", ] }
+egui = { version = "0.27.2", features = ["persistence", "log"] }
+egui_inspect = { path = "crates/egui_inspect" }
+flate2 = "1"
+image = { version = "0.24", default_features = false, features = ["png"] }
+itertools = "0.12"
+log = "0.4"
+matrix = { path = "crates/matrix" }
+num-derive = "0.4"
+num-traits = "0.2"
+once_cell = "1"
+proc_macros = { path = "crates/proc_macros" }
+rand = "0.8.5"
+rand_xoshiro = "0.6"
+rmp-serde = "1.1"
+serde = { version = "1", features = ["derive"] }
+smallvec = { version = "1", features = [ "serde", "const_new", "const_generics", "write", "union", ] }
+smol_str = { version = "*", features = ["serde"] }
+sys_io = { path = "crates/sys_io" }
+vector = { path = "crates/vector" }
+web-time = "1.1"
+
+[profile.release]
+panic = "abort"
+debug = false
+
+[profile.fast]
+inherits = "dev"
+panic = "unwind"
+debug = true
+lto = "off"
+opt-level = 1
+debug-assertions = true
+overflow-checks = true
+incremental = true
+
+[profile.fast.package."*"]
+inherits = "release"
+
+[profile.dev.package."*"]
+inherits = "release"
