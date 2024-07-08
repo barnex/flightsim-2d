@@ -2,9 +2,9 @@ use crate::prelude::*;
 
 #[derive(Clone, Debug, EguiInspect)]
 pub struct Scenegraph {
+	pub clear_color: vec4f,
 	pub uniforms: UniformData,
 
-	#[inspect(hide)]
 	pub instances: Vec<QuadInstanceData>,
 
 	pub meshbuffer: MeshBuffer<TerrainVertex>,
@@ -13,7 +13,7 @@ pub struct Scenegraph {
 	pub curr_z: f32,
 
 	#[inspect(hide)]
-	pub layer_boundaries: SmallVec<[u32; Scenegraph::TYP_LAYERS]>,
+	pub layer_boundaries: Vec<u32>,
 }
 
 impl Scenegraph {
@@ -43,7 +43,6 @@ impl Scenegraph {
 	pub fn push(&mut self, instance: QuadInstanceData) {
 		const Z_OFFSET_2D: f32 = 3.0; // 👈 offset 2D quads upwards by this amount so they are above the terrain.
 		self.instances.push(instance.with(|i| i.position[2] = self.curr_z + Z_OFFSET_2D))
-		//
 	}
 
 	pub fn instances(&self) -> &[QuadInstanceData] {
@@ -54,6 +53,7 @@ impl Scenegraph {
 impl Default for Scenegraph {
 	fn default() -> Self {
 		Self {
+			clear_color: vec4f(0.0, 0.0, 1.0, 1.0),
 			uniforms: UniformData::default(),
 			instances: default(),
 			curr_z: 0.0,

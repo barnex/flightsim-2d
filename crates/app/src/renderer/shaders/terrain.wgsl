@@ -43,9 +43,5 @@ fn vs_main(@builtin(vertex_index) v_idx: u32) -> VertexOut {
 
 @fragment
 fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
-    //let tex = textureSample(texture, texture_sampler, in.tex_coord);
-    //if (tex.a == 0.0) {discard;}
-    //let alpha_mul =  tex.a * tex.rgb; // 👈 assumes texture is non-premultiplied
-    //return vec4f(mix(alpha_mul, tex.a * in.mix_color.rgb, in.mix_color.a), tex.a);
     return vec4f(in.color.rgb, 1.0);
 }

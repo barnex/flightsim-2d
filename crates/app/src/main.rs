@@ -11,29 +11,12 @@ fn main() -> anyhow::Result<()> {
 		viewport: egui::ViewportBuilder::default().with_inner_size([800.0, 600.0]).with_min_inner_size([300.0, 220.0]),
 		vsync: true,
 		wgpu_options: eframe::egui_wgpu::WgpuConfiguration {
-			//supported_backends: default(),
-			//device_descriptor: default(),
-			//present_mode: default(),
-			//power_preference: default(),
-			//on_surface_error: default(),
 			..Default::default()
 		},
-		// depth_buffer: 32, // 👈 for Float32 depth stencil, if used by shaders
-		// multisampling: todo!(),
-		// stencil_buffer: todo!(),
-		// hardware_acceleration: todo!(),
-		// renderer: eframe::Renderer::Wgpu,
-		// follow_system_theme: todo!(),
-		// default_theme: todo!(),
-		// run_and_return: todo!(),
-		// event_loop_builder: todo!(),
-		// window_builder: todo!(),
-		// centered: todo!(),
-		// persist_window: todo!(),
 		..Default::default()
 	};
 	eframe::run_native(
-		"crablets",
+		"Flightsim 2D",
 		native_options,
 		Box::new(|cc| {
 			//egui_extras::install_image_loaders(&cc.egui_ctx);

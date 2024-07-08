@@ -10,30 +10,30 @@ impl Tilemap {
 		Self { tiles: Vec2D::new(size, fill) }
 	}
 
-	pub fn aquarium(size: vec2u) -> Self {
+	pub fn airstrip(size: vec2u) -> Self {
 		let (w, h) = (size.as_i32() - 1).into();
-		let mut map = Self::new(size, Tile::WATER);
+		let mut map = Self::new(size, Tile::AIR);
 
-		// sand pile
-		let mut rng = rand::thread_rng();
-		let mut sand_height = 5;
-		for x in 0..w {
-			sand_height += rng.gen_range(-1..=1) + rng.gen_range(-1..=1);
-			sand_height = sand_height.clamp(2, h / 2);
-
-			for y in 0..=sand_height {
-				map.try_set(vec2(x, y), Tile::SAND)
+		for x in (0..w).step_by(32) {
+			for y in (0..h).step_by(32) {
+				map.try_set((x, y).into(), Tile::CLOUD);
 			}
 		}
 
 		// borders
+		let h = 4;
 		for x in 0..=w {
-			map.try_set(vec2(x, 0), Tile::STONE);
-			map.try_set(vec2(x, h), Tile::STONE);
+			for y in 0..=h {
+				map.try_set(vec2(x, y), Tile::TARMAC);
+			}
+
+			if (x / 8) % 2 == 0 {
+				map.try_set(vec2(x, h), Tile::LINE);
+			}
 		}
+
 		for y in 0..=h {
-			map.try_set(vec2(0, y), Tile::STONE);
-			map.try_set(vec2(w, y), Tile::STONE);
+			map.try_set(vec2(0, y), Tile::TARMAC);
 		}
 
 		map
@@ -70,4 +70,12 @@ impl Tilemap {
 	pub fn iter(&self) -> impl Iterator<Item = (vec2u, Tile)> + '_ {
 		self.tiles.iter().map(|(pos, tile)| (pos, *tile))
 	}
+
+	pub fn _can_walk(&self, pos: vec2f) -> bool {
+		self.at_pos(pos.floor()).can_walk()
+	}
+}
+
+pub fn can_walk(pos: vec2f) -> bool {
+	pos.y() > 5.0
 }

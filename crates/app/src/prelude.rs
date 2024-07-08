@@ -3,7 +3,6 @@ pub use crate::*;
 pub use core_util::*;
 pub use matrix::*;
 pub use proc_macros::*;
-pub use sys_io::*;
 pub use vector::*;
 
 pub use anyhow::{anyhow, bail, Context, Error, Result};
@@ -14,12 +13,7 @@ pub use egui::{Rect, Ui};
 pub use image::{DynamicImage, GenericImageView};
 pub use itertools::Itertools;
 pub use num_traits::AsPrimitive;
-pub use rand::Rng as _;
 pub use serde::{de::DeserializeOwned, Deserialize, Serialize};
-pub use smallvec::SmallVec;
-pub type LazyLock<T> = once_cell::sync::Lazy<T>; // TODO: replace by std::sync::LazyLock once stable ().
-pub use rand_xoshiro::rand_core::SeedableRng;
-pub type Rng = rand_xoshiro::Xoshiro256PlusPlus;
 pub use egui_inspect::{inspect_debug, EguiInspect};
 pub use flate2::read::GzDecoder;
 pub use flate2::write::GzEncoder;
@@ -28,8 +22,6 @@ pub use web_time::{Duration, Instant, SystemTime};
 // AHash hashmap compatible with bevy_reflect::Reflect.
 pub type HashMap<K, V> = std::collections::HashMap<K, V, std::hash::BuildHasherDefault<ahash::AHasher>>;
 pub type HashSet<T> = std::collections::HashSet<T, std::hash::BuildHasherDefault<ahash::AHasher>>;
-
-pub type SmallStr = smol_str::SmolStr;
 
 pub use std::cell::{Cell, RefCell};
 pub use std::cmp::{PartialEq, PartialOrd};

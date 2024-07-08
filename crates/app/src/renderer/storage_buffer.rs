@@ -2,9 +2,6 @@ use crate::prelude::*;
 
 /// GPU counterpart of `Vec<T>`: a growable buffer of elements,
 /// corresponding to `ShaderPack::INSTANCE_LAYOUT`.
-///
-/// 🪲 Known bug: when close to capacity, does not upload all data.
-///
 pub struct StorageBuffer<T> {
 	buffer: wgpu::Buffer,
 	binding: wgpu::BindGroup, // binds buffer to `@binding(0)`, where `ShaderPack` expects it.

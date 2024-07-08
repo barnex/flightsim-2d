@@ -1,79 +1,52 @@
 use crate::*;
 
+// TileMap repeats after this number of tiles.
+pub const TILEMAP_WRAP: i32 = 512;
+
 impl GameState {
 	pub fn draw_on(&self, sg: &mut Scenegraph) {
-		// let visible_range = self.camera.visible_tile_range();
+		sg.clear_color = vec4(0.6, 0.7, 1.0, 1.0); // sky blue
+
 		sg.uniforms.camera = self.camera.matrix();
-		draw_axes(sg);
-		let visible_range = self.camera.visible_tile_range();
+		if self.debug.draw_axes {
+			draw_axes(sg);
+		}
+
 		self.draw_tilemap_3d(sg);
-		self.draw_props(sg);
-
-		if let Some(plane) = &self.plane{
-			plane.draw(sg)
-		}
-
-	}
-
-	fn draw_props(&self, sg: &mut Scenegraph) {
-		sg.new_layer(); // 👈  draw atop tiles
-
-		const MAX_SPRITE_SIZE: f32 = 4.0; // tiles
-
-		let visible_range = self //.
-			.camera
-			.visible_tile_range()
-			.with_margin(MAX_SPRITE_SIZE);
-
-		for crab in self.crablets.iter().filter(|crab| visible_range.contains(crab.position())) {
-			const SELECT_COLOR: vec4f = vec4f(0.5, 0.5, 1.0, 0.6);
-			sg.push(QuadInstanceData::new(crab.position(), crab.sprite()).with(|d| {
-				d.mix_color = select(SELECT_COLOR, vec4f::ZERO, crab.selected());
-				d.scale = crab.scale();
-				d.rotation = crab.rotation();
-			}));
-		}
-
-		for prop in self.plankton.iter().filter(|crab| visible_range.contains(crab.position())) {
-			const SELECT_COLOR: vec4f = vec4f(0.5, 0.5, 1.0, 0.6);
-			sg.push(QuadInstanceData::new(prop.position(), prop.sprite()).with(|d| {
-				d.mix_color = select(SELECT_COLOR, vec4f::ZERO, prop.selected());
-				d.scale = prop.scale();
-				d.rotation = prop.rotation();
-			}));
-		}
+		self.plane.draw(sg)
 	}
 
 	pub fn draw_tilemap_3d(&self, sg: &mut Scenegraph) {
-		sg.uniforms.camera = self.camera.matrix();
-		draw_axes(sg);
+		if !self.debug.draw_tilemap {
+			return;
+		}
 
-		for tile_p in self.visible_tile_range().iter_excl() {
-			// TODO: can avoid bound checks when carefully intersecting visible range with tile range
+		sg.uniforms.camera = self.camera.matrix();
+
+		if !self.plane.body.position.all(|v| v.is_finite()) {
+			return;
+		}
+
+		let offset = tilemap_x_offset(self.plane.body.position);
+
+		'tiles: for tile_p in self.visible_tile_range().iter_excl() {
 			let tile = self.tilemap._at(tile_p.as_u32());
+
+			if tile == Tile::AIR {
+				continue 'tiles; // 👈 no need to draw air
+			}
 
 			let height = tile.height();
 
-			let center = (tile_p.as_f32()).append(height);
+			let center = (tile_p.as_f32()).with(|v| v[0] += offset).append(height);
 
 			let corners = [(0, 0), (1, 0), (1, 1), (0, 1)].map(vec2::from);
 
 			let mut quad: [TerrainVertex; 4] = default();
 			for (i, corner) in corners.into_iter().enumerate() {
-				let mut sum_light = 0.0f32;
-				for neighbor in (-1..=0).cartesian_product(-1..=0).map(|(dx, dy)| tile_p + vec2(dx, dy) + corner) {
-					if self.tilemap.at_pos(neighbor).height() <= height {
-						sum_light += 0.25; // TODO: correclty occlude diagonal
-					}
-				}
-
-				let base_color = tile.color().map(|v| (v as f32) / 255.0);
-				let lit_color = base_color * sum_light;
-				let color_rgba = (lit_color * 255.0).as_u8();
-
 				let vertex = TerrainVertex {
 					position: center + corner.append(1).as_f32(),
-					color: pack4xu8(color_rgba),
+					color: pack4xu8(tile.color()),
 				};
 				quad[i] = vertex;
 			}
@@ -116,4 +89,8 @@ fn draw_axes(sg: &mut Scenegraph) {
 		}),
 		&origin.indices,
 	);
+}
+
+pub fn tilemap_x_offset(plane_pos: vec2f) -> f32 {
+	(((plane_pos.x().floor() as i32) / TILEMAP_WRAP) * TILEMAP_WRAP - TILEMAP_WRAP / 2) as f32
 }

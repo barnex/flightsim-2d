@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-#[derive(Serialize, Deserialize, Debug, EguiInspect, Setters)]
+#[derive(Serialize, Deserialize, Debug, EguiInspect)]
 #[serde(default)]
 pub struct GameState {
 	pub frame: u32,
@@ -11,70 +11,89 @@ pub struct GameState {
 	pub fps_label: String,
 
 	pub camera: Camera,
+	pub camera_follows: bool,
+
+	// exponential smoothing coefficient 0..1
+	pub camera_follow_speed: f32,
+
+	// buffer camera postition for exponential smoothing
+	#[inspect(hide)]
+	pub camera_follow_buf: vec2f,
 
 	#[serde(skip)]
 	pub mouse_pos: vec2f,
 
 	pub debug: DebugOpts,
 
-	pub selected_crab: Mut<Option<ID<Crablet>>>,
+	pub plane: Plane,
 
-	pub crablets: CellArena<Crablet>,
-	pub plankton: CellArena<Plankton>,
-	pub plane: Option<Plane>,
-
-	pub linear_damping: Mut<f32>,
-	pub angular_damping: Mut<f32>,
-
+	#[serde(skip)]
 	pub tilemap: Tilemap,
 
 	#[serde(skip)]
 	pub inputs: Inputs,
 
-	#[serde(skip)]
 	#[inspect(hide)]
-	pub stats: Stats,
-
-	#[serde(skip)]
-	#[inspect(hide)]
-	pub commands: Commands,
+	pub plotter: Plotter,
 }
 
-//pub const MAJOR_TICK_FRAMES: u32 = 16; // TODO
-
-impl GameState {
-	pub fn new() -> Self {
-		Self { ..default() }
-	}
-}
-
-//---------------------------------------------------------------- tick
 impl GameState {
 	pub fn tick(&mut self) {
 		self.tick_fps_counter();
-		self.stats.start_frame(); // ! Must be first. Zeros current frame stats.
 
 		// inputs processed even when systems paused so we can still move camera etc.
-		profiler::scope("tick_inputs", || self.tick_inputs());
+		self.tick_inputs();
 
-		if !self.debug.pause_all_systems {
-			self.frame += 1;
+		if self.debug.pause_all_systems {
+			self.plane.tick(0.0, &self.tilemap);
+			if self.debug.force_record_plots {
+				self.record_plot()
+			}
+		} else {
+			// TODO: this assumes 60 FPS
+			for _ in 0..(16 * self.debug.timepassage) {
+				self.inner_tick()
+			}
+			self.record_plot()
 		}
 
-		for crab in self.iter_crablets() {
-			crab.tick(self)
-		}
-		for prop in self.plankton.iter() {
-			prop.tick(self)
-		}
-		if let Some(plane) = &self.plane {
-			plane.tick(self)
-		}
+		self.tick_camera();
 
-		self.exec_command_queue();
-		self.gc();
+		if self.plane.position().y() < 0.0 {
+			self.debug.pause_all_systems = true; // stop simulation on crash
+		}
 
 		self.last_frame_cpu_micros = (micros_since_epoch() - self.last_frame_micro_timestamp).try_into().expect("u32 overflow");
+	}
+
+	pub fn inner_tick(&mut self) {
+		// fixed 1ms physics timestep
+		self.plane.tick(0.001 /*dt*/, &self.tilemap);
+		self.frame += 1;
+		self.record_plot();
+	}
+
+	pub fn record_plot(&mut self) {
+		let t = self.frame as f32 / 1000.0;
+		let body = &self.plane.body;
+		self.plotter.pushf(|| {
+			vec![
+				t, //_
+				body.position.x(),
+				body.position.y(),
+				body.velocity.x(),
+				body.velocity.y(),
+				body.acceleration.x(),
+				body.acceleration.y(),
+				body.rotation / DEG,
+				body.rot_velocity / DEG,
+				body.rot_accel / DEG,
+				self.plane.wings_aoa() / DEG,
+				self.plane.winglet_lift(&self.plane.wings).len(),
+				self.plane.winglet_induced_drag(&self.plane.wings).len(),
+				(body.acceleration + vec2f(0.0, self.plane.gravity)).len() / self.plane.gravity,
+			]
+		});
 	}
 
 	fn tick_fps_counter(&mut self) {
@@ -104,96 +123,59 @@ impl GameState {
 		self.last_frame_micro_timestamp = now as u64;
 	}
 
-	pub fn dt(&self) -> f32 {
-		let mut dt = 1.0 / self.last_fps;
-		if dt > 0.1 {
-			dt = 0.1; // slow down physics if we render < 10 FPS
+	fn tick_camera(&mut self) {
+		let a = self.camera_follow_speed.clamp(0.0, 1.0);
+		let b = 1.0 - a;
+		self.camera_follow_buf = a * self.plane.position() + b * self.camera_follow_buf;
+		if self.camera_follows {
+			self.camera.world_position = a * self.camera_follow_buf + b * self.camera.world_position;
 		}
-		if !dt.is_finite() {
-			dt = 0.016; // 60 FPS, a good guess
+
+		if !self.camera.world_position.iter().all(|v| v.is_finite()) {
+			self.camera.world_position = default();
+			self.camera_follow_buf = default();
 		}
-		if dt < 0.02 {
-			dt = 0.02;
-		}
-		dt
-	}
-
-	fn gc(&mut self) {}
-}
-
-//---------------------------------------------------------------- commands
-impl GameState {
-	pub fn remove_selected(&mut self) {
-		log::warn!("TODO: remove_selected");
-		//for crab in self.crablets.iter(){
-		//	if crab.selected(){
-		//		self.crablets.remove_later(crab.id)
-		//	}
-		//}
-	}
-
-	pub fn manual_tick(&mut self) {
-		self.debug.pause_all_systems = false;
-		self.tick();
-		self.debug.pause_all_systems = true;
-	}
-
-	pub fn spawn_crab(&mut self) {
-		self.crablets.push_now(Crablet::new(self.camera.world_position));
-	}
-
-	pub fn spawn_plankton(&mut self) {
-		self.plankton.push_now(Plankton::new(self.camera.world_position));
-	}
-}
-
-impl GameState {
-	pub fn iter_crablets(&self) -> impl Iterator<Item = &Crablet> {
-		self.crablets.iter()
 	}
 }
 
 impl Default for GameState {
 	fn default() -> Self {
-		let map_size = vec2u(256, 128);
-		let mut rng = rand::thread_rng();
 		Self {
 			frame: 0,
-			stats: default(),
-			selected_crab: default(),
 			mouse_pos: default(),
 			inputs: default(),
 			camera: default(),
+			camera_follows: true,
+			camera_follow_speed: 0.4,
+			camera_follow_buf: default(),
 			debug: default(),
-			commands: default(),
 			last_frame_micro_timestamp: micros_since_epoch(),
 			last_frame_micros: 0,
 			last_fps: 0.0,
 			last_frame_cpu_micros: 0,
 			fps_label: default(),
-			crablets: CellArena::default().with(|v| {
-				v.push_now(Crablet::new((5.0, 3.0).into()));
-			}),
-			plankton: CellArena::default().with(|v| {
-				for _ in 0..1 {
-					v.push_now(Plankton::new(20.0 * vec2f(rng.gen(), rng.gen())));
-				}
-			}),
-			plane: None,
-			linear_damping: 0.33.into(),
-			angular_damping: 0.33.into(),
-			tilemap: Tilemap::aquarium(vec2(64, 48)),
+			plane: Plane::default(),
+			tilemap: Tilemap::airstrip(vec2(1024, 1024)),
+			plotter: Plotter::new(&[
+				"t (s)", //_
+				"x position (m)",
+				"y position (m)",
+				"x velocity (m/s)",
+				"y velocity (m/s)",
+				"x acceleration (m/s²)",
+				"y acceleration (m/s²)",
+				"pitch (deg)",
+				"rot. vel (deg/s)",
+				"torque (deg/s²)",
+				"aoa (deg)",
+				"lift (N)",
+				"drag (N)",
+				"G force",
+			]),
 		}
 	}
 }
 
 pub fn micros_since_epoch() -> u64 {
 	SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).expect("system time").as_micros() as u64
-}
-
-/// Util
-impl GameState {
-	pub fn rng(&self) -> rand::rngs::ThreadRng {
-		rand::thread_rng()
-	}
 }

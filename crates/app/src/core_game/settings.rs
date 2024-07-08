@@ -95,17 +95,10 @@ pub struct NetworkOpts {
 pub struct DebugOpts {
 	pub pause_all_systems: bool,
 	pub tick_plankton: bool,
-	//pub enable_animation: bool,
-	//pub enable_congestion: bool,
-	//pub navigation_overlay: bool,
-	//pub congestion_overlay: bool,
-	//pub reservation_overlay: bool,
-	//pub pathfinding_overlay: bool,
-	//pub taskman_empty_hands: bool,
-	//pub taskman_give_work: bool,
-	//pub expire_factory_reservations: bool,
-	//pub tick_factories: bool,
-	//pub god_mode: bool,
+	pub draw_tilemap: bool,
+	pub draw_axes: bool,
+	pub force_record_plots: bool,
+	pub timepassage: u32,
 }
 
 impl Default for DebugOpts {
@@ -113,6 +106,10 @@ impl Default for DebugOpts {
 		Self {
 			pause_all_systems: false,
 			tick_plankton: true,
+			draw_tilemap: true,
+			draw_axes: true,
+			force_record_plots: false,
+			timepassage: 1,
 		}
 	}
 }

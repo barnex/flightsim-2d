@@ -39,7 +39,11 @@ impl Camera {
 			2.0 * vec3(sx, s, s / self.z_range)
 		};
 
-		translation_matrix(vec3(0.0, 0.0, 0.5)) * scale_matrix_anisotropic(scale) * pitch_matrix(self.pitch) * rotation_matrix(vec3::EZ, self.rotation) * translation_matrix(-delta)
+		mat4x4::translation(vec3(0.0, 0.0, 0.5)) //_
+	 	* mat4x4::scale_anisotropic(scale) //_
+	 	* mat4x4::pitch(self.pitch)  //_
+	 	* mat4x4::rotation_matrix(vec3::EZ, self.rotation)  //_
+	 	* mat4x4::translation(-delta)
 	}
 
 	/// convert from screen position (pixels) to game (tile) position
@@ -52,10 +56,11 @@ impl Camera {
 
 	/// visible part of the world, given current camera position, zoom and screen size.
 	pub fn visible_tile_range(&self) -> Bounds2f {
+		let offset = vec2(tilemap_x_offset(self.world_position), 0.0);
 		let vec([w, h]) = self.viewport_size_pix.as_f32();
 		Bounds2f {
-			min: self.screen_to_tile(vec2(0.0, h)),
-			max: self.screen_to_tile(vec2(w, 0.0)) + vec::ONES,
+			min: self.screen_to_tile(vec2(0.0, h)) - offset,
+			max: self.screen_to_tile(vec2(w, 0.0)) + vec::ONES - offset,
 		}
 	}
 }

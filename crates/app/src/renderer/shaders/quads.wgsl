@@ -23,8 +23,9 @@ struct InstanceData {
     _padding: f32,
     tex_coords_off: vec2f,
     tex_coords_size: vec2f,
-    scale: f32,
+    scale: vec2f,
     rotation: f32,
+    _padding: f32,
 }
 
 var<private> v_positions: array<vec2f, 6> = array<vec2f, 6>(
@@ -63,7 +64,7 @@ fn vs_main(@builtin(vertex_index) v_idx: u32, @builtin(instance_index) i_idx: u3
     let rotation_matrix = mat2x2f(c, s, -s, c);
 
     let v_pos = v_positions[v_idx];
-    out.position = vec4f(vec3f(instance.scale * (rotation_matrix * v_pos), 0.0) + instance.pos, 1.0);
+    out.position = vec4f(vec3f((rotation_matrix * (instance.scale * v_pos)), 0.0) + instance.pos, 1.0);
     out.position = uniforms.camera * out.position;
 
     out.tex_coord = instance.tex_coords_off + instance.tex_coords_size * v_texcoords[v_idx];

@@ -5,23 +5,16 @@
 #![allow(clippy::useless_conversion)]
 
 mod prelude;
-mod profiler;
 
-mod ai;
 mod app;
-mod cells;
 mod core_game;
 mod renderer;
-mod scope;
 mod util;
 
 pub use app::App;
 
-pub(crate) use ai::*;
-pub(crate) use cells::*;
 pub(crate) use core_game::*;
 pub(crate) use renderer::*;
-pub(crate) use scope::*;
 pub(crate) use util::*;
 
 pub fn select<T>(true_value: T, false_value: T, cond: bool) -> T {

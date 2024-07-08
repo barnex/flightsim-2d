@@ -6,8 +6,8 @@ use num_traits::Float;
 use serde::{Deserialize, Serialize};
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 
-mod inspect;
 mod dynamic;
+mod inspect;
 pub use dynamic::*;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -727,7 +727,8 @@ where
 		(self - rhs).len()
 	}
 
-	/// Vector with same direction but length normalized to 1.
+	/// Vector with same direction but length normalized to 1,
+	/// unless length was zero.
 	/// ```
 	/// # use vector::*;
 	/// assert_eq!(vec3(0.0, 3.0, 4.0).normalized(), vec3(0.0, 3.0, 4.0) / 5.0);
@@ -741,6 +742,40 @@ where
 		} else {
 			self / len
 		}
+	}
+}
+
+impl<T> vec3<T>
+where
+	T: Copy + Mul<T, Output = T> + Sub<T, Output = T>,
+{
+	/// Cross product.
+	/// ```
+	/// # use vector::*;
+	/// assert_eq!(vec3(1,0,0).cross(vec3(0,1,0)), vec3(0,0,1));
+	/// ```
+	#[inline]
+	pub fn cross(self, rhs: Self) -> Self {
+		Self([
+			self.y() * rhs.z() - self.z() * rhs.y(),
+			self.z() * rhs.x() - self.x() * rhs.z(),
+			self.x() * rhs.y() - self.y() * rhs.x(),
+		])
+	}
+}
+
+impl<T> vec2<T>
+where
+	T: Copy + Mul<T, Output = T> + Sub<T, Output = T> + Number,
+{
+	/// Cross product.
+	/// ```
+	/// # use vector::*;
+	/// assert_eq!(vec2(1,0).cross(vec2(0,1)), 1);
+	/// ```
+	#[inline]
+	pub fn cross(self, rhs: Self) -> T {
+		self.append(T::ZERO).cross(rhs.append(T::ZERO)).z()
 	}
 }
 

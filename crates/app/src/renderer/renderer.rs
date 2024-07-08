@@ -16,10 +16,11 @@ pub struct Renderer {
 	texture_atlas: Texture,
 
 	// draw instances from instance buffer layer-by-layer, back to front.
-	layer_boundaries: SmallVec<[u32; Scenegraph::TYP_LAYERS]>,
+	layer_boundaries: Vec<u32>,
 }
 
 pub const RED: vec4<u8> = vec4(255, 0, 0, 255);
+pub const BLUE: vec4<u8> = vec4(0, 0, 255, 255);
 
 /// GPU buffers byte size is multiple of this.
 /// wgpu does not like arbitrarily sized buffers.
@@ -62,13 +63,14 @@ impl Renderer {
 
 		// This render pass renders the world to the offscreen HDR framebuffer.
 		{
+			let (r, g, b, a) = sg.clear_color.as_f64().into();
 			let render_pass_desc = wgpu::RenderPassDescriptor {
 				label: Some("offscreen render pass"),
 				color_attachments: &[Some(wgpu::RenderPassColorAttachment {
 					view: &self.framebuf.hdr_texture.view,
 					resolve_target: None,
 					ops: wgpu::Operations {
-						load: wgpu::LoadOp::Clear(wgpu::Color { r: 0.9, g: 0.9, b: 0.95, a: 1.0 }),
+						load: wgpu::LoadOp::Clear(wgpu::Color { r, g, b, a }),
 						store: wgpu::StoreOp::Store,
 					},
 				})],

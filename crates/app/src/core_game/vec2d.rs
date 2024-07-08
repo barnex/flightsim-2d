@@ -8,8 +8,6 @@ pub struct Vec2D<T> {
 }
 
 impl<T> EguiInspect for Vec2D<T>
-//where
-//T: EguiInspect,
 {
 	fn inspect(&self, label: &str, ui: &mut egui::Ui) {
 		ui.horizontal(|ui| {
