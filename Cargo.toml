@@ -18,7 +18,13 @@ anyhow = "1"
 base64 = "*"
 bytemuck = "1"
 core_util = { path = "crates/core_util" }
-eframe = { version = "0.27.2", default-features = false, features = [ "persistence", "default_fonts", "wgpu", ] }
+eframe = { version = "0.27.2", default-features = false, features = [
+	"persistence",
+	"default_fonts",
+	"wgpu",
+	"wayland",
+	"x11",
+] }
 egui = { version = "0.27.2", features = ["persistence", "log"] }
 egui_plot = { version = "0.27" }
 egui_inspect = { path = "crates/egui_inspect" }

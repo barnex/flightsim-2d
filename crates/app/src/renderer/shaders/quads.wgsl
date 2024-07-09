@@ -25,7 +25,7 @@ struct InstanceData {
     tex_coords_size: vec2f,
     scale: vec2f,
     rotation: f32,
-    _padding: f32,
+    _padding2: f32,
 }
 
 var<private> v_positions: array<vec2f, 6> = array<vec2f, 6>(
@@ -77,7 +77,7 @@ fn vs_main(@builtin(vertex_index) v_idx: u32, @builtin(instance_index) i_idx: u3
 @fragment
 fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     let tex = textureSample(texture, texture_sampler, in.tex_coord);
-    if (tex.a == 0.0) {discard;}
-    let alpha_mul =  tex.a * tex.rgb; // 👈 assumes texture is non-premultiplied
+    if tex.a == 0.0 {discard;}
+    let alpha_mul = tex.a * tex.rgb; // 👈 assumes texture is non-premultiplied
     return vec4f(mix(alpha_mul, tex.a * in.mix_color.rgb, in.mix_color.a), tex.a);
 }
